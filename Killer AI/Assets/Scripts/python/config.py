@@ -5,7 +5,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MAX_ENEMIES = 10
 
 # Size of the agent state
-AGENT_INP_SIZE = 2
+AGENT_INP_SIZE = 7
 
 # Size of the target state
 ENEMY_INP_SIZE = 7
@@ -25,11 +25,14 @@ ENC_STATE_SIZE = MAX_ENEMIES + 1
 NUM_NONTARGET_EMBS = 2
 
 STATE_SIZE = AGENT_INP_SIZE + ENEMY_INP_SIZE * MAX_ENEMIES
-
+replay_episode = "/media/data/code/KillerAI/Killer AI/Assets/Scripts/python/experiences"
 
 HEADER_LEN  = 8
 
 PORT = 12001
+batch_size = 32
+valid_split = 0.1
+replay_episode = ""
 
 
 ACTION_DIMS = [

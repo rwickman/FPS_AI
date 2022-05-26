@@ -20,17 +20,15 @@ def map_action(action_dict: dict):
     return torch.tensor(action, device=device)
 
 def map_state(state_dict: dict) -> tuple:
-    """Convert the state dict into a state and mask tensor."""
-    temp_state = {'position': [10.499, 0.962, 1.12525835e-18], 'rotation': [0.0, 0.0, 0.0, 1.0], 'enemies': [{'position': [11.4103689, -4.76837158e-07, 7.02], 'rotation': [0.0, 0.06450648, 0.0, 0.9979173]}]}
-    
-    user_state = [state_dict["yaw"], state_dict["pitch"]]
-    target_states = []
+    """Convert the state dict into a state and mask tensor."""    
+    user_state = [state_dict["position"], state_dict["rotation"]]
+    enemy_states = []
 
-    for target_state in state_dict["enemies"]:
-        target_states += target_state["position"]
-        target_states += target_state["rotation"]
+    for enemy_state in state_dict["enemies"]:
+        enemy_states += enemy_state["position"]
+        enemy_states += enemy_state["rotation"]
 
-    state_list = user_state + target_states
+    state_list = user_state + enemy_states
 
     state = torch.zeros(STATE_SIZE, device=device)
     state[:len(state_list)] = torch.tensor(state_list, device=device)
@@ -41,23 +39,22 @@ def map_state(state_dict: dict) -> tuple:
     # Create state mask
     return state, mask 
 
-def load_data(args):
-    data_files = os.listdir(args.replay_episode)
+def load_data():
+    data_files = os.listdir(replay_episode)
     actions, states, masks = [], [], []
     for data_file in data_files:
         if "meta" in data_file:
             continue
-        exp_dict_list = torch.load(os.path.join(args.replay_episode, data_file))
-        cur_actions, cur_states, cur_masks = load_replays(args, exp_dict_list)
+        exp_dict_list = torch.load(os.path.join(replay_episode, data_file))
+        cur_actions, cur_states, cur_masks = load_replays(exp_dict_list)
         actions += cur_actions
         states += cur_states
         masks += cur_masks
     
     return actions, states, masks
 
-def load_replays(args, exp_dict_list):
+def load_replays(exp_dict_list):
     """Convert the actions and states to training data."""
-    # exp_dict_list = torch.load(args.replay_episode)
     actions = []
     states = []
     masks = []
@@ -71,9 +68,9 @@ def load_replays(args, exp_dict_list):
              
             action_idx = map_action(action_dict)
             
-            # Filter out do nothing actions
-            if action_idx == 0:
-                continue
+            # # Filter out do nothing actions
+            # if action_idx == 0:
+            #     continue
 
             #  Map the action to index
             actions.append(action_idx)
@@ -118,11 +115,11 @@ def get_dataloader(args):
 
     train_dataloader = DataLoader(
         train_replay_dataset,
-        batch_size=args.batch_size,
+        batch_size=batch_size,
         shuffle=True)
     val_dataloader = DataLoader(
         val_replay_dataset,
-        batch_size=args.batch_size,
+        batch_size=batch_size,
         shuffle=True)
     
     
