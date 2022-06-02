@@ -18,6 +18,7 @@ inp_timesteps = 14
 num_heads=4
 drop_rate=0.1
 num_enc_layers=4
+lr = 1e-4
 
 # The number of target states + the agent state
 ENC_STATE_SIZE = MAX_ENEMIES + 1
@@ -25,39 +26,50 @@ ENC_STATE_SIZE = MAX_ENEMIES + 1
 NUM_NONTARGET_EMBS = 2
 
 STATE_SIZE = AGENT_INP_SIZE + ENEMY_INP_SIZE * MAX_ENEMIES
-replay_episode = "/media/data/code/KillerAI/Killer AI/Assets/Scripts/python/experiences"
+replay_episode = "/media/data/code/KillerAI/Killer AI/Assets/Scripts/python/experiences/"
 
 HEADER_LEN  = 8
 
 PORT = 12001
-batch_size = 32
+batch_size = 64
 valid_split = 0.1
-replay_episode = ""
-
+save_dir = "/media/data/code/KillerAI/Killer AI/Assets/Scripts/python/models"
+load = False
+epochs = 100
 
 ACTION_DIMS = [
     9, # mouse_x
     9, # mouse_y
-    4, # move
+    9, # move
     2, # isRunning
     2, # isJumping
     2, # isShooting
 ]
-mouse_pos = ["0.0", "0.1", "0.33", "0.66", "1", "-0.1", "-0.33", "-0.66", "-1.0"]
+mouse_pos = ["0.0", "0.1", "0.33", "0.66", "1.0", "-0.1", "-0.33", "-0.66", "-1.0"]
 
-
+move_pos = ["1.0", "0.0", "-1.0"]
 
 action_to_idx = {
-    "move" : {("0.0", "0.0"): 0, ("0.0", "1.0"): 1, ("1.0", "0.0"): 2, ("1.0", "1.0"): 3},
+    "move" : {},
     "mouse_x": {},
     "mouse_y": {},
-} 
+}
+
 cur_iter = 0
 for key in ["mouse_x", "mouse_y"]:
     cur_iter = 0
     for i in range(len(mouse_pos)):
         action_to_idx[key][mouse_pos[i]] = cur_iter 
         cur_iter += 1
+
+cur_iter = 0
+for i in range(len(move_pos)):
+    for j in range(len(move_pos)):
+        action_to_idx["move"][(move_pos[i], move_pos[j])] = cur_iter 
+        cur_iter += 1
+
+move_list = list(action_to_idx["move"].keys())
+
 print(action_to_idx)
 
 

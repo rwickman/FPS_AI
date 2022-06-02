@@ -32,7 +32,7 @@ class ImitationModel(nn.Module):
         self.enemy_enc = Encoder(ENEMY_INP_SIZE)
         
         # Embedding for the timestep position
-        self.pos_embs = nn.Parameter(torch.randn(1, 1, inp_timesteps, args.emb_size))
+        self.pos_embs = nn.Parameter(torch.randn(1, 1, inp_timesteps, emb_size))
         self.pred_emb =  nn.Parameter(torch.randn(1, 1, emb_size))
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=emb_size,
@@ -43,8 +43,8 @@ class ImitationModel(nn.Module):
         self.enc = nn.TransformerEncoder(encoder_layer, num_enc_layers)
         
         self.fc_outs = []
-        for action_dim in range(ACTION_DIMS):
-            self.fc_outs.append(nn.Linear(emb_size, NUM_ACTIONS))
+        for action_dim in ACTION_DIMS:
+            self.fc_outs.append(nn.Linear(emb_size, action_dim))
         
         self.fc_outs = nn.ModuleList(self.fc_outs)
 
@@ -59,7 +59,7 @@ class ImitationModel(nn.Module):
 
         # Break into individual parts
         agent_state = state[:, :, :AGENT_INP_SIZE].unsqueeze(1)
-        target_state = state[:, :, AGENT_INP_SIZE:].reshape(batch_size, MAX_TARGETS, inp_timesteps, TARGET_INP_SIZE)
+        target_state = state[:, :, AGENT_INP_SIZE:].reshape(batch_size, MAX_ENEMIES, inp_timesteps, ENEMY_INP_SIZE)
 
         # Get embeddings
         agent_emb = self.agent_enc(agent_state)
@@ -90,6 +90,6 @@ class ImitationModel(nn.Module):
                 pred_out = self.softmax_out(pred_out)
             pred_outs.append(pred_out)
 
-        return pred_out
+        return pred_outs
 
 

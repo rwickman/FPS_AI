@@ -38,6 +38,7 @@ class RecordPlayer:
             exps.append(env_dic)
             print("env_dic", env_dic)
             print("env_dic", len(env_dic))
+            self.conn.send("end?".encode())
 
 
         self.save(exps)
