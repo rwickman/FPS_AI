@@ -16,20 +16,25 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        playerMove.action = new Action();
+        //playerMove = new Action();
+
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
         bool isRunning = Input.GetKey(KeyCode.LeftShift);
         bool isJumping = Input.GetKeyDown(KeyCode.Space);
-        playerMove.Move(h, v, isRunning, isJumping);
+        bool isShooting = Input.GetButton("Fire1");
+        // playerMove.Shoot();
+        playerMove.Move(h, v, isRunning, isJumping, isShooting);
 
 
         float mouseX = Input.GetAxis("Mouse X");
         float mouseY = Input.GetAxis("Mouse Y");
         playerMove.MoveCamera(mouseX, mouseY);
 
-        if (Input.GetButton("Fire1"))
-        {
-            playerMove.Shoot();
-        }
+        // if (Input.GetButton("Fire1"))
+        // {
+        //     playerMove.Shoot();
+        // }
     }
 }

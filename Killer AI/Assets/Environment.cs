@@ -77,7 +77,6 @@ public class Environment : MonoBehaviour
         for(int i = 0; i < enemiesHealth.Count; i++)
         {
             enemiesHealth[i].Revive();
-            print(enemiesHealth[i].gameObject.name);
             ResetTransform(enemiesInitTransform[i], enemiesHealth[i].gameObject.transform);
             enemiesHealth[i].gameObject.SetActive(true);
         }

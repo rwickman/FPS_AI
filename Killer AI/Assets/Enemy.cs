@@ -5,8 +5,9 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     // Stopping distance to player
+    
     public float stoppingDist;
-    GameObject player;
+    public GameObject player;
     Animator animator;
     bool isAttacking;
     public float attackSpeed;
@@ -18,7 +19,7 @@ public class Enemy : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        player = GameObject.Find("Player");
+        //player = GameObject.Find("Player");
         animator = GetComponent<Animator>();
     }
 

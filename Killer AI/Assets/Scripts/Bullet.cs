@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-
     public float lifeSpanSec = 20f;
     private float startTime;
     public float attackDamage = 2.0f;
+
     // Start is called before the first frame update
     void Start()
     {

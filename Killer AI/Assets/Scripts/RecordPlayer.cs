@@ -1,43 +1,75 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+public class State {
+    public float[] position = new float[3];
+    public float[] rotation = new float[4];
+
+    public float health;
+
+    public List<EnemyState> enemies = new List<EnemyState>();
+
+    // public State Clone()
+    // {
+    //     State cloneState = new State();
+    //     cloneState.position = position.Clone();
+    //     cloneState.rotation = rotation.Clone();
+        
+    //     foreach(EnemyState enemy in enemies)
+    //     {
+    //         EnemyState enemyState = new EnemyState();
+    //         enemyState.position = enemy.position.Clone();
+    //         enemyState.rotation = enemy.rotation.Clone();
+    //         cloneState.enemies.Add(enemyState);
+    //     }
+    //     return cloneState;
+    // }
+}
+
+public class EnemyState
+{
+    public float[] position = new float[3];
+    public float[] rotation = new float[4];
+    public float health;
+}
 
 public class RecordPlayer : MonoBehaviour
 {
-    public class State {
-        public float[] position = new float[3];
-        public float[] rotation = new float[4];
 
-        public List<EnemyState> enemies = new List<EnemyState>();
-    }
-
-    public class EnemyState
-    {
-        public float[] position = new float[3];
-        public float[] rotation = new float[4];
-    }
 
     public Environment env;
+    public int tickRecordFreq = 4;
+    public int curTick = 0;
     PlayerMovement playerMovement;
+    Health playerHealth;
     private PolicyConnectionShooting policyCon;
     int elapsedEpisodes = 0;
     bool shouldReset;
+    bool doReset;
 
     List<State> states = new List<State>();
     List<Action> actions = new List<Action>();
+    List<float> rewards = new List<float>();
     
     // Start is called before the first frame update
     void Start()
     {
         playerMovement = GetComponent<PlayerMovement>();
         policyCon = GetComponent<PolicyConnectionShooting>();
+        playerHealth = GetComponent<Health>();
         Connect();
 
     }
     // Update is called once per frame
     void LateUpdate()
     {
-        if (env.IsEpisodeTerminated() && !shouldReset)
+        if (doReset)
+        {
+            env.Reset();
+            doReset = false;
+            curTick = 0;
+        }
+        else if (env.IsEpisodeTerminated() && !shouldReset)
         {
             elapsedEpisodes += 1;
             shouldReset = true;
@@ -45,8 +77,13 @@ public class RecordPlayer : MonoBehaviour
         }
         else if (!shouldReset)
         {
-            RecordAction();
-            RecordState();
+            if (curTick % tickRecordFreq == 0)
+            {
+                RecordAction();
+                RecordState();
+            }
+
+            curTick += 1;
         }
     }
 
@@ -64,21 +101,33 @@ public class RecordPlayer : MonoBehaviour
 
     private void RecordState()
     {
+        float reward = 0.0f;
         State state = new State();
         RecordTransform(state.position, state.rotation, transform);  
-        foreach(Health enemyHealth in env.enemiesHealth)
+        for(int i = 0; i < env.enemiesHealth.Count; i++)
         {
             EnemyState enemyState = new EnemyState();
-            RecordTransform(enemyState.position, enemyState.rotation, enemyHealth.transform);
+            RecordTransform(enemyState.position, enemyState.rotation, env.enemiesHealth[i].transform);
+            enemyState.health = env.enemiesHealth[i].health;
             state.enemies.Add(enemyState);
-        }
 
+            if (states.Count > 0)
+            {
+                reward += enemyState.health - states[states.Count - 1].enemies[i].health;
+            }
+        }
+        state.health = playerHealth.health; 
+        if (states.Count > 0)
+        {
+            reward += states[states.Count - 1].health - state.health;
+        }
         states.Add(state);
+        rewards.Add(reward);
     }
 
     private void RecordAction()
     {
-        // playerMovement.action.Print();
+        playerMovement.action.Print();
         actions.Add(playerMovement.action);
     }
 
@@ -92,6 +141,7 @@ public class RecordPlayer : MonoBehaviour
         Dictionary<string, dynamic> stateDict = new Dictionary<string, dynamic>();
         stateDict["states"] = states;
         stateDict["actions"] = actions;
+        stateDict["rewards"] = rewards;
 
         policyCon.isEpisodeOver = true;
         policyCon.SendState(stateDict);
@@ -99,7 +149,10 @@ public class RecordPlayer : MonoBehaviour
 
     private void Reset()
     {
-        env.Reset();
+        states = new List<State>();
+        actions = new List<Action>();
+        rewards = new List<float>();
+        doReset = true;
         shouldReset = false;
     }   
 }

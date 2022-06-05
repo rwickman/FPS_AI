@@ -7,11 +7,12 @@ public class Health : MonoBehaviour
 {   
     [HideInInspector]
     public float health;
+    public bool shouldSetActive = true;
 
     public float maxHealth; 
     Slider healthSlider;
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         healthSlider = GetComponentInChildren<Slider>();
         health = maxHealth;
@@ -40,6 +41,10 @@ public class Health : MonoBehaviour
 
     void Death()
     {
-        gameObject.SetActive(false);
+        if (shouldSetActive)
+        {
+            gameObject.SetActive(false);
+        }
+        
     }
 }

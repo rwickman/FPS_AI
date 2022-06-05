@@ -123,6 +123,7 @@ public class PolicyConnectionShooting : MonoBehaviour
 
     private void SendStateCallback(IAsyncResult ar)
     {
+        print("SendStateCallback" + isEpisodeOver);
         client.EndSend(ar);
         if(isEpisodeOver)
         {
@@ -130,6 +131,7 @@ public class PolicyConnectionShooting : MonoBehaviour
         }
         else
         {
+            print("WATING TO RECEIVE ACTION");
             ReceiveAction();
         }
     }
@@ -145,6 +147,7 @@ public class PolicyConnectionShooting : MonoBehaviour
 
     private void ReceiveActionBody(IAsyncResult ar)
     {
+        print("ReceiveActionBody");
         StateObject state = (StateObject)ar.AsyncState;
         client.EndReceive(ar);
 
@@ -156,6 +159,7 @@ public class PolicyConnectionShooting : MonoBehaviour
 
     private void ReceiveActionBodyCallback(IAsyncResult ar)
     {
+        print("ReceiveActionBodyCallback");
         client.EndReceive(ar);
 
         StateObject state = (StateObject)ar.AsyncState;
@@ -163,6 +167,7 @@ public class PolicyConnectionShooting : MonoBehaviour
         //Debug.Log(actionJson);
         // agent.SetAction();
         Dictionary<string, dynamic> actionDict = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(actionJson);
+        print("CALLING resetSendStateCallback");
         resetSendStateCallback(actionDict);
     }
  

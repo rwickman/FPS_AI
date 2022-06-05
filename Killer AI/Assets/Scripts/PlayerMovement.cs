@@ -23,6 +23,11 @@ public class Action {
             Debug.Log(x);
 
         }
+
+        // public Action Clone()
+        // {
+        //     Action action = new Action();
+        // }
 }
 
 public class PlayerMovement : MonoBehaviour
@@ -112,14 +117,19 @@ public class PlayerMovement : MonoBehaviour
         transform.rotation = Quaternion.Slerp(transform.rotation, playerRot, 0.75f);
     }
 
-    public void Move(float h, float v, bool isRunning, bool isJumping)
+    public void Move(float h, float v, bool isRunning, bool isJumping, bool isShooting)
     {
         action.xMove = h;
         action.yMove = v;
         action.isRunning = isRunning;
         action.isJumping = isJumping;
-        action.isShooting = false;
+        action.isShooting = isShooting;
+        if (isShooting)
+        {
+            Shoot();
 
+        }
+        
         Vector3 movement = new Vector3(h, 0.0f, v);
         Vector3 forward = transform.forward;
         forward.y = 0.0f;
