@@ -5,7 +5,7 @@ from config import *
 class StateHistory:
     def __init__(self):
         self.state_history = torch.zeros(inp_timesteps, STATE_SIZE, device=device)
-        self.mask_history = torch.zeros(inp_timesteps, ENC_STATE_SIZE, device=device)
+        self.mask_history = torch.ones(inp_timesteps, ENC_STATE_SIZE, device=device)
         
     def update_state(self, state: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         """Augment the state with the history of states."""

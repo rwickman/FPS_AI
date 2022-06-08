@@ -2,30 +2,41 @@ import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-MAX_ENEMIES = 10
+MAX_ENEMIES = 2
 
 # Size of the agent state
-AGENT_INP_SIZE = 7
+AGENT_INP_SIZE = 8
 
 # Size of the target state
-ENEMY_INP_SIZE = 7
+ENEMY_INP_SIZE = 8
+
+ACTION_VEC_SIZE = 10
+
+
+# Trajectory size (state, action, reward)
+TRAJ_SIZE = 3
 
 """Model hyperparameters"""
 hidden_size = 64
 emb_size = 128
-dff=384
+dff=256
 inp_timesteps = 14
 num_heads=4
 drop_rate=0.1
-num_enc_layers=4
-lr = 1e-4
+num_enc_layers=6
+lr = 3e-4
 
 # The number of target states + the agent state
-ENC_STATE_SIZE = MAX_ENEMIES + 1
+ENC_STATE_SIZE = TRAJ_SIZE + MAX_ENEMIES
+
+RETURN_SIZE = 1
+
+default_action = [0, ]
 
 NUM_NONTARGET_EMBS = 2
 
-STATE_SIZE = AGENT_INP_SIZE + ENEMY_INP_SIZE * MAX_ENEMIES
+STATE_SIZE = AGENT_INP_SIZE + ACTION_VEC_SIZE + RETURN_SIZE + ENEMY_INP_SIZE * MAX_ENEMIES
+
 replay_episode = "/media/data/code/KillerAI/Killer AI/Assets/Scripts/python/experiences/"
 
 HEADER_LEN  = 8

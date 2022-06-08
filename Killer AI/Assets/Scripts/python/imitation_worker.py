@@ -1,6 +1,6 @@
 
 import json, socket, threading
-
+from replay_dataset import map_action
 from config import *
 
 class ImitationWorker:
@@ -31,8 +31,9 @@ class ImitationWorker:
 
         state_dict = json.loads(data)
         state_dict = state_dict["state"] 
+        reward = state_dict["reward"]
         
-        return state_dict
+        return state_dict, reward
 
     def send_action(self, action_dict):
         action_json_str = json.dumps(action_dict)
@@ -47,10 +48,13 @@ class ImitationWorker:
         self.conn.send(action_json_str.encode())
 
     def run(self):
+        prev_action = default_action
+        return_to_go = 0
         while True:
             state = self.receive_state()
 
-            action = self.policy(state)
+            action = self.policy(state, prev_action, reward)
+            _, prev_action = map_action(action)
             self.send_action(action)
 
 

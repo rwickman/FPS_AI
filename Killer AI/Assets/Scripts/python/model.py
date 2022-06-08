@@ -10,7 +10,7 @@ class Encoder(nn.Module):
 
         self.fc1 = nn.Linear(inp_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, emb_size)
-        #self.norm_1 = nn.LayerNorm(self.args.hidden_size, eps=1e-6)
+        #self.norm_1 = nn.LayerNorm(hidden_size, eps=1e-6)
         self.act1 = nn.GELU()
         self.dropout_1 = nn.Dropout(drop_rate)
 
@@ -24,11 +24,25 @@ class Encoder(nn.Module):
         # x = self.norm_2(x)
         return x
 
+class ActionHead(nn.Module):
+    def __init__(self, out_size):
+        super().__init__()
+        self.fc_1 = nn.Linear(emb_size, hidden_size)
+        self.act = nn.GELU()
+        self.fc_2 = nn.Linear(hidden_size, out_size)
+
+    def forward(self, x):
+        x = self.fc_1(x)
+        x = self.act(x)
+        x = self.fc_2(x)
+        return x
 
 class ImitationModel(nn.Module):
     def __init__(self, use_softmax=False):
         super().__init__()
         self.agent_enc = Encoder(AGENT_INP_SIZE)
+        self.action_enc = Encoder(ACTION_VEC_SIZE)
+        self.return_enc = Encoder(RETURN_SIZE)
         self.enemy_enc = Encoder(ENEMY_INP_SIZE)
         
         # Embedding for the timestep position
@@ -44,7 +58,7 @@ class ImitationModel(nn.Module):
         
         self.fc_outs = []
         for action_dim in ACTION_DIMS:
-            self.fc_outs.append(nn.Linear(emb_size, action_dim))
+            self.fc_outs.append(ActionHead(action_dim))
         
         self.fc_outs = nn.ModuleList(self.fc_outs)
 
@@ -59,17 +73,24 @@ class ImitationModel(nn.Module):
 
         # Break into individual parts
         agent_state = state[:, :, :AGENT_INP_SIZE].unsqueeze(1)
-        target_state = state[:, :, AGENT_INP_SIZE:].reshape(batch_size, MAX_ENEMIES, inp_timesteps, ENEMY_INP_SIZE)
-
+        action_state = state[:, :, AGENT_INP_SIZE:AGENT_INP_SIZE+ACTION_VEC_SIZE].unsqueeze(1)
+        reward_state =  state[:, :, AGENT_INP_SIZE+ACTION_VEC_SIZE:AGENT_INP_SIZE+ACTION_VEC_SIZE+1].unsqueeze(1)
+        target_state = state[:, :, AGENT_INP_SIZE+ACTION_VEC_SIZE+1:].reshape(batch_size, MAX_ENEMIES, inp_timesteps, ENEMY_INP_SIZE)
+        # print("agent_state.shape", agent_state.shape)
+        # print("action_state.shape", action_state.shape)
+        # print("reward_state.shape", reward_state.shape)
+        # print("target_state.shape", target_state.shape)
         # Get embeddings
         agent_emb = self.agent_enc(agent_state)
+        # print("agent_emb.shape", agent_emb.shape)
+        action_emb = self.action_enc(action_state)
+        # print("action_emb.shape", action_emb.shape)
+        reward_emb = self.return_enc(reward_state)
         target_embs = self.enemy_enc(target_state)
         
         
-        embs = torch.cat((agent_emb, target_embs), 1)
+        embs = torch.cat((agent_emb, action_emb, reward_emb, target_embs), 1)
         embs = embs + self.pos_embs
-
-        
         
         embs = embs.reshape(batch_size, -1, emb_size)
         mask = mask.reshape(batch_size, -1)

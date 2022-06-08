@@ -18,24 +18,54 @@ def map_action(action_dict: dict):
         int(action_dict["isShooting"]),
     ]
 
-    return torch.tensor(action, device=device)
+    action_vec = [
+        float(action_dict["xMouse"]),
+        float(action_dict["yMouse"]),
+        float(action_dict["xMove"]),
+        float(action_dict["yMove"])]
+    
+    if int(action_dict["isRunning"]) == 0:
+        action_vec.append(0)
+        action_vec.append(1)
+    else:
+        action_vec.append(1)
+        action_vec.append(0)
 
-def map_state(state_dict: dict) -> tuple:
+    if int(action_dict["isJumping"]) == 0:
+        action_vec.append(0)
+        action_vec.append(1)
+    else:
+        action_vec.append(1)
+        action_vec.append(0)
+
+    if int(action_dict["isShooting"]) == 0:
+        action_vec.append(0)
+        action_vec.append(1)
+    else:
+        action_vec.append(1)
+        action_vec.append(0)
+    
+
+    return torch.tensor(action, device=device), action_vec
+
+def map_state(state_dict: dict, action_vec: torch.Tensor, reward: float) -> tuple:
     """Convert the state dict into a state and mask tensor."""    
     user_state = state_dict["position"] + state_dict["rotation"]
+    user_state.append(state_dict["health"])
     enemy_states = []
 
     for enemy_state in state_dict["enemies"]:
         enemy_states += enemy_state["position"]
         enemy_states += enemy_state["rotation"]
+        enemy_states.append(enemy_state["health"])
 
-    state_list = user_state + enemy_states
+    state_list = action_vec + user_state + [reward] + enemy_states
 
     state = torch.zeros(STATE_SIZE, device=device)
     state[:len(state_list)] = torch.tensor(state_list, device=device)
     
     mask = torch.zeros(ENC_STATE_SIZE, device=device)
-    mask[1 + len(state_dict["enemies"]):] = 1
+    mask[TRAJ_SIZE + len(state_dict["enemies"]):] = 1
 
     # Create state mask
     return state, mask 
@@ -59,31 +89,49 @@ def load_replays(exp_dict_list):
     actions = []
     states = []
     masks = []
+    non_zero_count = 0
 
     # Map them to int actions
     for exp_dict in exp_dict_list:
+        prev_action_vec = default_action
         state_history = StateHistory()
+        print("\n")
         for i in range(len(exp_dict["actions"])):
             state_dict = exp_dict["states"][i]
             action_dict = exp_dict["actions"][i]
+            return_to_go = -sum(exp_dict["rewards"][i:])
+            
+            print("return_to_go", return_to_go)
              
-            action_idx = map_action(action_dict)
+            action_idx, action_vec = map_action(action_dict)
             
             # # Filter out do nothing actions
             # if action_idx == 0:
             #     continue
 
             #  Map the action to index
+            if action_idx[0] == 0 and action_idx[1] == 0 and action_idx[2] == 4 and action_idx[-1] == 0:
+                non_zero_count += 1
+                if non_zero_count < 3:
+                    continue
+                else:
+                    non_zero_count = 0
+                
+            
             actions.append(action_idx)
 
             # Convert the state into tensor
-            state, mask = map_state(state_dict)
+            state, mask = map_state(state_dict, prev_action_vec, return_to_go)
+            prev_action_vec = action_vec
 
             # Augment the state with additional timesteps
             state, mask = state_history.update_state(state, mask)
+            
 
             states.append(state)
             masks.append(mask)
+            if return_to_go == 0:
+                break
 
     return actions, states, masks
     

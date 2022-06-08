@@ -109,17 +109,18 @@ public class RecordPlayer : MonoBehaviour
             EnemyState enemyState = new EnemyState();
             RecordTransform(enemyState.position, enemyState.rotation, env.enemiesHealth[i].transform);
             enemyState.health = env.enemiesHealth[i].health;
-            state.enemies.Add(enemyState);
+            
 
             if (states.Count > 0)
             {
-                reward += enemyState.health - states[states.Count - 1].enemies[i].health;
+                reward +=  states[states.Count - 1].enemies[i].health - enemyState.health;
             }
+            state.enemies.Add(enemyState);
         }
         state.health = playerHealth.health; 
         if (states.Count > 0)
         {
-            reward += states[states.Count - 1].health - state.health;
+            reward += state.health - states[states.Count - 1].health;
         }
         states.Add(state);
         rewards.Add(reward);

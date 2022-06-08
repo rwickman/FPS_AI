@@ -54,15 +54,18 @@ class ImitationPolicy:
         """Used for training the model."""
         return self.model(state, mask)
 
-    def __call__(self, state_dict: dict) -> int:
+    def __call__(self, state_dict: dict, action_vec: list, reward: float) -> int:
         """Used for inference."""
-        state, mask = map_state(state_dict)
+        state, mask = map_state(
+            state_dict,
+            action_vec,
+            reward)
 
         # Add history to state
         state, mask = self.state_history.update_state(state, mask)
         
         pred_outs = self.model(state.unsqueeze(0), mask.unsqueeze(0))
-        print(len(pred_outs))
+        #print(len(pred_outs))
         actions = []
         for pred_out in pred_outs:
             actions.append(Categorical(pred_out).sample().item())
